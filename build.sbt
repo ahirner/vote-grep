@@ -1,15 +1,15 @@
+scalaVersion := "2.11.8"
+
 lazy val common = Seq(
   organization := "org.votegrep",
   version := "0.0-PoC",
   scalaVersion := "2.11.8"
 )
 /*
-lazy val root = (project in file(".")).
-  settings(common: _*).
-  settings(
-    name := "vote-grep"
-  )
+lazy val vote-grep = (project in file(".")).
+  settings(common: _*)
 */
+
 lazy val server = (project in file("server")).
   settings(common: _*).
   settings(

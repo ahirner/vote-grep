@@ -2,17 +2,8 @@
 package server
 
 import java.net.URL
-
-import com.gargoylesoftware.htmlunit._
-import com.gargoylesoftware.htmlunit.html._
-//import org.apache.http.HttpEntity
-import scala.collection.JavaConversions._
 import scala.concurrent._
 import scala.concurrent.duration._
-
-
-
-
 
 //akka server
 
@@ -24,6 +15,7 @@ import akka.util.Timeout
 import akka.http.scaladsl.model.{HttpEntity, ContentTypes}
 import akka.stream.ActorMaterializer
 
+
 class EchoActor extends Actor {
   override def receive: Receive = {
     case message => sender() ! message
@@ -34,23 +26,37 @@ object WebServer {
 
   val IndexHTML =
     """
-       <h1>Scrape complex sites with ease</h2>
-      <div>
-      <form action="navigate" method="post">
-        <input type="text" value ="http://www.villapark.org/2015-villa-park-city-council-meeting-archives/" name="url"
-         size="80">
-        <input type="submit" value="Navigate To" autofocus>
-      </form>
-      <a href="s" target="_blank">Open sanitized Site</a>
-      <hr>
-      <form action="execute" method="post">
-        <textarea cols="70" rows="5" name="js-code"></textarea>
-        <input type="submit" value="Execute Code">
-      </form>
-      </dv>
+      | <h1>Scrape complex sites with ease</h2>
+      |<div>
+      |<form action="navigate" method="post">
+      |  <input type="text" value ="http://econnect.tustinca.org/weblink8/browse.aspx?dbid=0" name="url"
+      |   size="80">
+      |  <input type="submit" value="Navigate To" autofocus>
+      |</form>
+      |<a href="s" target="_blank">Open sanitized Site</a>
+      |<hr>
+      |<form action="execute" method="post">
+      |
+      |  code <textarea cols="70" rows="10" name="code">
+      |//preamble
+      |  function getElementByXpath(path) {
+      |  return document.evaluate(path, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+      |}
+      |//step
+      |</textarea>
+      |  <br>
+      |  <input type="submit" value="Execute Code">
+      |</form>
+      |</dv>
     """.stripMargin
 
-  def run(c: String = "<h1>sanitized HTML goes here</h1>") = {
+  val RedirectHTML=
+    """
+      |<p>..redirecting in 2 seconds </p>
+      |<script>window.setTimeout(function(){ window.location = ".."; },2000);</script>
+    """.stripMargin
+
+  def run(c: String = "<h1>Navigate to Page first..</h1>") = {
 
     val crawler = new CrawlBot(cssEnabled = true)
 
@@ -95,17 +101,19 @@ object WebServer {
               val url = new URL(urlStr)
               crawler.navigateTo(url)
               content = crawler.topXml
-              complete(s"navigated to: $urlStr")
+              val res = s"<h2>navigated to: $urlStr</h2>" + RedirectHTML
+              complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, res))
             }
           }
         }
       } ~
       path("execute") {
         post {
-          formField("js-code") { codeStr => {
+          formField("code") { codeStr => {
             crawler.executeScript(codeStr)
             content = crawler.topXml
-            complete(s"executed: $codeStr")
+            val res = s"<h2>executed: $codeStr</h2>" + RedirectHTML
+            complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, res))
           }
           }
         }

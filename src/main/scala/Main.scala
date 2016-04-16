@@ -1,6 +1,6 @@
 
 import org.votegrep._
-import org.votegrep.server._
+import server._
 
 
 import java.net.URL
@@ -33,7 +33,7 @@ case class Content(url: URL, strURL: String, content: String, URLs: List[String]
 }
 
 
-
+/*
 object Main {
 
   implicit val URLConverter = new StringConverter[URL] {
@@ -141,4 +141,4 @@ object Main {
   scala.io.StdIn.readLine()
   //seeds.foreach(s => println(s._1 + " **** " + parse(s._2.seedURL).toString))
 
-}
+}*/

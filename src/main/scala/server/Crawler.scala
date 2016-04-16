@@ -6,6 +6,7 @@ import com.gargoylesoftware.htmlunit.html.{HtmlElement, HtmlPage}
 import com.gargoylesoftware.htmlunit.{BrowserVersion, CookieManager, SilentCssErrorHandler, WebClient}
 
 import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.duration._
 
 // Initialization code from https://github.com/bplawler/crawler
 // Can be refactored into stateless Future?
@@ -61,7 +62,7 @@ class Crawler( version: BrowserVersion = BrowserVersion.CHROME
     val element = currentPage.asInstanceOf[HtmlPage]
     val scriptResult = Await.result(
       Future { element.executeJavaScript(script).getNewPage }
-      , 120.second
+      , 120.seconds
     )
     val start = (new java.util.Date).getTime
     val stillRunning = client.waitForBackgroundJavaScript(1000 /* ms */)
