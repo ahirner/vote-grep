@@ -35,11 +35,11 @@ libraryDependencies ++= Seq(
   "org.jsoup" % "jsoup" % "1.8.3",
   "com.joestelmach" % "natty" % "0.12",
   "net.sourceforge.htmlunit" % "htmlunit" % "2.21",
-  "rome" % "rome" % "1.0",
+  "rome" % "rome" % "1.0"
 
-  "org.http4s" %% "http4s-dsl" % http4sVersion,
-  "org.http4s" %% "http4s-blaze-server" % http4sVersion,
-  "io.github" %% "crawler" % "latest.integration" //local package
+  //"org.http4s" %% "http4s-dsl" % http4sVersion,
+  //"org.http4s" %% "http4s-blaze-server" % http4sVersion,
+  //"io.github" %% "crawler" % "latest.integration" //local package
   //"org.json4s" %% "json4s-native" % "3.3.0"
   //"com.github.nscala-time" %% "nscala-time" % "2.12.0"
   //"org.mongodb.scala" %% "mongo-scala-driver" % "1.0.0",
