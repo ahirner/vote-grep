@@ -35,16 +35,8 @@ libraryDependencies ++= Seq(
   "org.jsoup" % "jsoup" % "1.8.3",
   "com.joestelmach" % "natty" % "0.12",
   "net.sourceforge.htmlunit" % "htmlunit" % "2.21",
-  "rome" % "rome" % "1.0"
-
-  //"org.http4s" %% "http4s-dsl" % http4sVersion,
-  //"org.http4s" %% "http4s-blaze-server" % http4sVersion,
-  //"io.github" %% "crawler" % "latest.integration" //local package
-  //"org.json4s" %% "json4s-native" % "3.3.0"
-  //"com.github.nscala-time" %% "nscala-time" % "2.12.0"
-  //"org.mongodb.scala" %% "mongo-scala-driver" % "1.0.0",
-  //"net.databinder.dispatch" %% "dispatch-core" % "0.11.2",
-  //"org.scalatest" %% "scalatest" % "2.2.4" % "test"
+  "rome" % "rome" % "1.0",
+  "org.seleniumhq.selenium" % "selenium-java" % "2.53.0"
 )
 
 // use ammonite

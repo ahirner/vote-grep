@@ -4,6 +4,7 @@ import java.net.URL
 
 import com.gargoylesoftware.htmlunit.html.{HtmlElement, HtmlPage}
 import com.gargoylesoftware.htmlunit.{BrowserVersion, CookieManager, SilentCssErrorHandler, WebClient}
+import org.openqa.selenium.remote.RemoteWebDriver
 
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
@@ -75,7 +76,7 @@ class Crawler( version: BrowserVersion = BrowserVersion.CHROME
 
 }
 
-
+/*
 class CrawlBot(output: java.io.OutputStream = System.out,   version: BrowserVersion = BrowserVersion.CHROME
                , failOnJSError: Boolean = false
                , javaScriptEnabled: Boolean = true
@@ -93,4 +94,35 @@ class CrawlBot(output: java.io.OutputStream = System.out,   version: BrowserVers
 ) {
 
   def topXml = currentPage.asXml
+}*/
+
+import org.openqa.selenium.By
+import org.openqa.selenium.WebDriver
+import org.openqa.selenium.WebElement
+import org.openqa.selenium.chrome.ChromeDriver
+import org.openqa.selenium.firefox.FirefoxDriver
+import org.openqa.selenium.remote.RemoteWebDriver
+
+class CrawlBot(output: java.io.OutputStream = System.out, driver: String = "")
+{
+
+  private val WebDriver = driver.toLowerCase match {
+  case "chrome" => new ChromeDriver()
+  case _ => new FirefoxDriver()
+}
+
+  var currentUrl: URL = new URL("http://dirty.ref.com")
+
+  def navigateTo(url: URL) = {
+    WebDriver.get(url.toString)
+    currentUrl = url
+  }
+
+  def executeScript(script: String) : AnyRef = {
+    val result = WebDriver.executeScript(script)
+    currentUrl = new URL(WebDriver.getCurrentUrl)
+    result
+  }
+
+  def topXml = WebDriver.getPageSource
 }

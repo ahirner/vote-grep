@@ -2,6 +2,7 @@
 package server
 
 import java.net.URL
+
 import scala.concurrent._
 import scala.concurrent.duration._
 
@@ -16,7 +17,7 @@ import akka.http.scaladsl.model.{HttpEntity, ContentTypes}
 import akka.stream.ActorMaterializer
 
 
-class EchoActor extends Actor {
+class BrowserActor extends Actor {
   override def receive: Receive = {
     case message => sender() ! message
   }
@@ -24,26 +25,37 @@ class EchoActor extends Actor {
 
 object WebServer {
 
+  val scriptPreamble =
+    """
+      |//preamble
+      |function getElementByXpath(path) {
+      |return document.evaluate(path, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+      |}
+      |function logRemote(msg) {
+      |xhttp = new XMLHttpRequest();
+      |xhttp.open("POST", "http://localhost:8080/log", true);
+      |xhttp.send(msg);
+      |}
+    """.stripMargin
   val IndexHTML =
     """
       | <h1>Scrape complex sites with ease</h2>
       |<div>
       |<form action="navigate" method="post">
-      |  <input type="text" value ="http://econnect.tustinca.org/weblink8/browse.aspx?dbid=0" name="url"
+      |  <input type="text" value ="http://placentia.granicus.com/ViewPublisher.php?view_id=4" name="url"
       |   size="80">
       |  <input type="submit" value="Navigate To" autofocus>
       |</form>
       |<a href="s" target="_blank">Open sanitized Site</a>
       |<hr>
       |<form action="execute" method="post">
-      |
-      |  code <textarea cols="70" rows="10" name="code">
-      |//preamble
-      |  function getElementByXpath(path) {
-      |  return document.evaluate(path, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-      |}
-      |//step
-      |</textarea>
+      |  code (delineate commands with ||) <br>
+      |  <textarea cols="70" rows="10" name="code">
+      |getElementByXpath("//*[@id='VoteLogTabs']/ul/li[2]/a").click(); return("changed to VoteLog"); ||
+      |getElementByXpath("//tr/td[@class=\"gvl_details\"]/a").click(); return("opened details for most recent vote"); ||
+      |var date = getElementByXpath("//tr/td[@class=\"gvl_date\"]/span").textContent;
+      |var result = getElementByXpath("//div[@id='gvl_voteDetails']").textContent;
+      |return "date = " + date + "\n\n" + result;</textarea>
       |  <br>
       |  <input type="submit" value="Execute Code">
       |</form>
@@ -58,7 +70,7 @@ object WebServer {
 
   def run(c: String = "<h1>Navigate to Page first..</h1>") = {
 
-    val crawler = new CrawlBot(cssEnabled = true)
+    val crawler = new CrawlBot()
 
     var content = c
     implicit val system = ActorSystem("my-system")
@@ -67,7 +79,7 @@ object WebServer {
     // needed for thefuture flatMap/onComplete in the end
     implicit val executionContext = system.dispatcher
 
-    val echo = system.actorOf(Props(new EchoActor))
+    val browser = system.actorOf(Props(new BrowserActor))
 
     def route(echo: ActorRef)(implicit mat: ActorMaterializer, ec: ExecutionContext) = {
       path("") {
@@ -110,17 +122,38 @@ object WebServer {
       path("execute") {
         post {
           formField("code") { codeStr => {
-            crawler.executeScript(codeStr)
+
+            val results = codeStr.split("""\|\|""").map(s => {
+              val res = crawler.executeScript(scriptPreamble + s)
+              Thread sleep 2500
+              res.toString
+            })
+
+            val resStr = results mkString "\n"
+            println("script run returned: \n" + resStr)
             content = crawler.topXml
-            val res = s"<h2>executed: $codeStr</h2>" + RedirectHTML
+
+            val htmlStr = resStr.replaceAll("\n", "<br>")
+            val res = s"<h3>executed: ${codeStr.take(10)}...</h2><p> yielded $htmlStr" + RedirectHTML
             complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, res))
           }
           }
         }
+      } ~
+      path("log") {
+        post {
+          decodeRequest {
+            entity(as[String]) { msg =>
+              println(msg)
+              complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, ""))
+            }
+          }
+        }
       }
+
     }
     //start and block
-    val bindingFuture = Http().bindAndHandle(route(echo), "localhost", 8080)
+    val bindingFuture = Http().bindAndHandle(route(browser), "localhost", 8080)
 
     println(s"Server online at http://localhost:8080/\nPress RETURN to stop...")
     scala.io.StdIn.readLine() // let it run until user presses return
@@ -129,34 +162,3 @@ object WebServer {
       .onComplete(_ ⇒ system.terminate()) // and shutdown when done
   }
 }
-
-
-// http4s server
-/*
-
-import org.http4s._, org.http4s.dsl._
-import org.http4s.headers.`Content-Type`
-import org.http4s.{MediaType, Response, Request}
-import org.http4s.server.blaze._
-
-val serviceTest = HttpService {
-  case GET -> Root / "hello" / name =>
-    Ok(s"Hello, $name.")
-}
-
-val serviceTopCrawlXml = HttpService {
-  case req @ GET -> Root / "v" / detail =>
-    Ok(c.topXml).putHeaders(`Content-Type`(MediaType.`text/html`))
-}
-
-
-val builder = BlazeBuilder
-  .mountService(serviceTopCrawlXml)
-  .mountService(serviceTest)
-
-println(c.topXml)
-val server = builder.run
-scala.io.StdIn.readLine()
-server.shutdownNow
-*/
-
